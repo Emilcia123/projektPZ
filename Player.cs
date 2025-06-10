@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace GraWZiemniaka
 {
-    public class Player
+    public class Player : IPlayer
     {
-        public string Name { get; }
-        public int Wynik { get; private set; }
+        public string Name { get; set; }
+        public int Wynik { get;  set; }
 
+        public Player() { }
         public Player(string name)
         {
             Name = name;

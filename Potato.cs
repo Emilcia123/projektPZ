@@ -14,5 +14,6 @@
             Z = z;
             IsMarked = false;
         }
+        public Player? Player { get; set; }
     }
 }

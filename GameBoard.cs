@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 namespace GraWZiemniaka
 {
@@ -12,7 +7,7 @@ namespace GraWZiemniaka
         public List<Potato> Potatoes { get; set; } = new();
         public int Size { get; }
 
-        public delegate void DelegatZakonczeniaRzedu(Player player, int score);
+        public delegate void DelegatZakonczeniaRzedu(Player player, int wynik);
         public event DelegatZakonczeniaRzedu ZakonczonyRzad;
 
         public GameBoard(int size)
@@ -24,11 +19,11 @@ namespace GraWZiemniaka
         private void GeneratePotatoes()
         {
             Potatoes.Clear();
-            for (int x = 0; x <= Size; x++)
+            for (int x = 0; x < Size; x++)
             {
-                for (int y = 0; y <= Size - x; y++)
+                for (int y = 0; y < Size - x; y++)
                 {
-                    int z = Size - x - y;
+                    int z = Size - 1- x - y;
                     Potatoes.Add(new Potato(x, y, z));
                 }
             }
@@ -41,8 +36,10 @@ namespace GraWZiemniaka
                 throw new WyjatekNieprawidlowyRuch("Nieprawidłowy ruch.");
 
             potato.IsMarked = true;
+            potato.Player = player; 
 
-            var kierunki = new List<Func<Potato, int>> {
+            var kierunki = new List<Func<Potato, int>>
+    {
         p => p.X,
         p => p.Y,
         p => p.Z
@@ -60,8 +57,45 @@ namespace GraWZiemniaka
                     ZakonczonyRzad?.Invoke(player, wynik);
                 }
             }
-
         }
+
+
+        
+        public Potato ZnajdzNajlepszyRuch()
+        {
+            var ruchy = Potatoes
+                .Where(p => !p.IsMarked)
+                .Select(p => new
+                {
+                    Potato = p,
+                    Punkty = new List<Func<Potato, int>> { x => x.X, x => x.Y, x => x.Z }
+                                .Max(sel =>
+                                {
+                                    var row = Potatoes.Where(x => sel(x) == sel(p)).ToList();
+                                    int oznaczone = row.Count(x => x.IsMarked);
+                                    int OgolemWLinni = row.Count;
+
+                                    int ileNieoznaczonych = OgolemWLinni - oznaczone;
+                                    int bonus = 0;
+
+
+
+                                    if (ileNieoznaczonych == 1)
+                                        bonus = 100;
+                                    else if (ileNieoznaczonych == 2)
+                                        bonus = 50;
+
+                                    return oznaczone + bonus;
+                                })
+                })
+
+                .OrderByDescending(r => r.Punkty)
+                .ThenBy(_ => Guid.NewGuid()) 
+                .ToList();
+
+            return ruchy.FirstOrDefault()?.Potato;
+        }
+
 
 
         public static GameBoard Load(string filename)
@@ -70,14 +104,14 @@ namespace GraWZiemniaka
             return JsonSerializer.Deserialize<GameBoard>(data);
         }
 
-
         public List<List<Potato>> GetCompletedRows()
         {
-            var kierunki = new List<Func<Potato, int>> {
-        p => p.X,
-        p => p.Y,
-        p => p.Z
-    };
+            var kierunki = new List<Func<Potato, int>>
+            {
+                p => p.X,
+                p => p.Y,
+                p => p.Z
+            };
 
             List<List<Potato>> ukonczoneRzedy = new();
 
@@ -96,6 +130,5 @@ namespace GraWZiemniaka
 
             return ukonczoneRzedy;
         }
-
     }
 }

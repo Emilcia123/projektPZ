@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace GraWZiemniaka
 {
-    public interface IPlayer
+    public interface IBotPlayer
     {
-        public void DodajWynik(int punkty);
+        Potato WybierzRuch(GameBoard board, Player bot);
     }
+
 }
